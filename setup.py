@@ -12,6 +12,7 @@ limitations under the License.
 """
 
 from setuptools import setup, find_packages
+import os
 
 PACKAGE='brainsearch'
 
@@ -21,7 +22,7 @@ __author__ = 'jmward'
 def get_version():
 	""" Gets the current version of the package.
 	"""
-	version_py = os.path.join(os.path.dirname(__file__), 'deepgram', 'version.py')
+	version_py = os.path.join(os.path.dirname(__file__), 'brainsearch', 'version.py')
 	with open(version_py, 'r') as fh:
 		for line in fh:
 			if line.startswith('__version__'):

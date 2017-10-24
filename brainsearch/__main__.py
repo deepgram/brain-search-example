@@ -32,7 +32,7 @@ def main():
   #Argparse is great, but unfortunately specifying a default will append it to the list so we will check for it
   # explicitly
   fileArgs = args.file
-  if len(fileArgs) == 0:
+  if fileArgs is None or len(fileArgs) == 0:
     fileArgs = ['./*']
   files = []
   #Now strip out only the files that have the right file extension
@@ -42,9 +42,6 @@ def main():
   if len(files) == 0:
     print('No valid input files found.')
     exit(0)
-
-  #print(args.query)
-  #print(files)
 
   if args.server is not None:
     brainAPI = Brain(url=args.server, user_id= args.user_id, token = args.token)
