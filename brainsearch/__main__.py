@@ -76,7 +76,8 @@ def main():
 
   #Since we loaded asynchronously we need to wait untill all assets have finished loading to search them
   while len(loadingAssets) > 0:
-    for assetId in loadingAssets:
+    print('Waiting for assets to process...')
+    for assetId in loadingAssets.copy():
       asset = brainAPI.asset(assetId)
       if asset['transcript'] is not None:
         loadingAssets.remove(assetId)
