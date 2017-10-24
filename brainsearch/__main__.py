@@ -23,6 +23,7 @@ def main():
   parser.add_argument('-t', '--token', help='API user token', required=True)
   parser.add_argument('-s', '--server', help='URL of the API server to use.')
   parser.add_argument('-r', '--reload', help='Reload all data files to the server.', action='store_true')
+  parser.add_argument('-q', '--quality', help='Minimum quality result to report.', type=float, default=.7)
 
   parser.add_argument('query', nargs='+', help='Phrase to search for')
   parser.add_argument('-f', '--file', help='Files to search in.', action='append')
@@ -59,19 +60,19 @@ def main():
         previousAssets[asset['metadata']['filename']] = asset['asset_id']
 
   #now lets load the files into brain or re-use them if they are already there
-  assetIds = []
+  assetIds = {}
   loadingAssets = set()
   for file in files:
     basename = os.path.basename(file)
     if basename in previousAssets:
       print('Reusing: {}'.format(basename))
-      assetIds.append(previousAssets[basename])
+      assetIds[previousAssets[basename]] = basename
     else:
       print('Loading: {}'.format(basename))
       with open(file, mode='rb') as data:
         #We want to make this async so that we can let brain process while we load more assets
         assetId = brainAPI.uploadAsset(data, async=True, metadata={'filename':basename})['asset_id']
-        assetIds.append(assetId)
+        assetIds[assetId] = basename
         loadingAssets.add(assetId)
 
   #Since we loaded asynchronously we need to wait untill all assets have finished loading to search them
@@ -86,8 +87,13 @@ def main():
       time.sleep(2.0)
 
   #now search!
-  results = brainAPI.searchAssets(' '.join(args.query), assetIds)
-  print(results)
+  results = brainAPI.searchAssets(' '.join(args.query), tuple(assetIds))['results']
+  #and display the results
+  for result in results:
+    print('{} hits:'.format(assetIds[result['asset_id']]))
+    for hit in result['hits']:
+      if hit['quality'] >= args.quality:
+        print('{}:{}'.format(hit['quality'], hit['time']))
 
 if __name__ == '__main__':
   main()
