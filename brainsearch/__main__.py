@@ -23,7 +23,7 @@ def main():
   parser.add_argument('-t', '--token', help='API user token', required=True)
   parser.add_argument('-s', '--server', help='URL of the API server to use.')
   parser.add_argument('-r', '--reload', help='Reload all data files to the server.', action='store_true')
-  parser.add_argument('-q', '--quality', help='Minimum quality result to report.', type=float, default=.7)
+  parser.add_argument('-q', '--quality', help='Minimum quality result to report.', type=float, default=.6)
 
   parser.add_argument('query', nargs='+', help='Phrase to search for')
   parser.add_argument('-f', '--file', help='Files to search in.', action='append')
