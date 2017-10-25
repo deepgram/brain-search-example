@@ -137,10 +137,14 @@ def main():
   with open('results.html', mode='w') as resultsFile:
     resultsFile.write('<html><head><title>Search Results</title></head><body>')
     resultsFile.write('<b>Search query:</b> {}<br>'.format(' '.join(args.query)))
-    for idx, (basename, quality, hitTime, mp3URL) in enumerate(goodResults):
-      resultsFile.write('<p><b>{}</b>: At {:0.2f} with quality {:0.2f}</br>'.format(basename, hitTime, quality))
-      resultsFile.write('<audio id="audio{}" preload="auto" src="{}" controls/></p>'.format(idx, mp3URL))
-      resultsFile.write('<script>document.getElementById("audio{}").currentTime={};</script>'.format(idx, hitTime))
+    if len(goodResults) > 0:
+      resultsFile.write('<b>Results:</b><br>')
+      for idx, (basename, quality, hitTime, mp3URL) in enumerate(goodResults):
+        resultsFile.write('<p><b>{}</b>: At {:0.2f} with quality {:0.2f}</br>'.format(basename, hitTime, quality))
+        resultsFile.write('<audio id="audio{}" preload="auto" src="{}" controls/></p>'.format(idx, mp3URL))
+        resultsFile.write('<script>document.getElementById("audio{}").currentTime={};</script>'.format(idx, hitTime))
+    else:
+      resultsFile.write('<b>No results found.</b>')
     resultsFile.write('</body></html>')
 
   webbrowser.open('file://' + os.path.abspath('results.html'))
