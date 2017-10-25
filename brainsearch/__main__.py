@@ -12,7 +12,7 @@ limitations under the License.
 """
 
 from deepgram import Brain
-import argparse, os, time, urllib.parse
+import argparse, os, time, urllib.parse, webbrowser
 from glob import glob
 FILE_TYPES = '.mp3 .3gp .aifc .mp4 .ogg .aif .wav .amr .flac .wmv .mpg .mkv .mp2 .mov .webm .3gpp .m4a .wma .aiff .aac .3ga .links'.split()
 
@@ -22,7 +22,7 @@ def loadLink(brainAPI, link, previousAssets):
   basename = os.path.basename(urlPath)
   if basename in previousAssets:
     print('Reusing: {}'.format(basename))
-    return previousAssets[basename], basename, True
+    return previousAssets[basename][0], basename, True
   else:
     print('Loading: {}'.format(basename))
     # We want to make this async so that we can let brain process while we load more assets
@@ -33,7 +33,7 @@ def loadFile(brainAPI, path, previousAssets):
   basename = os.path.basename(path)
   if basename in previousAssets:
     print('Reusing: {}'.format(basename))
-    return previousAssets[basename], basename, True
+    return previousAssets[basename][0], basename, True
   else:
     print('Loading: {}'.format(basename))
     with open(path, mode='rb') as data:
@@ -42,12 +42,13 @@ def loadFile(brainAPI, path, previousAssets):
       return assetId, basename, False
 
 def main():
+
   parser = argparse.ArgumentParser()
   parser.add_argument('-u', '--user', help='API user id', required=True)
   parser.add_argument('-t', '--token', help='API user token', required=True)
   parser.add_argument('-s', '--server', help='URL of the API server to use.')
   parser.add_argument('-r', '--reload', help='Reload all data files to the server.', action='store_true')
-  parser.add_argument('-q', '--quality', help='Minimum quality result to report.', type=float, default=.6)
+  parser.add_argument('-q', '--quality', help='Minimum quality result to report.', type=float, default=.65)
 
 
   parser.add_argument('query', nargs='+', help='Phrase to search for')
@@ -76,12 +77,12 @@ def main():
     brainAPI = Brain(user_id=args.user, token=args.token)
 
   #To save time, lets look for any previous assets that we have loaded
-  previousAssets = {}
+  allAssets = {}
   if not args.reload:
     for asset in brainAPI.assets:
       if ('status' not in asset or asset['status'] != 'failed') and asset['transcript_exists'] == True and asset[
         'metadata'] is not None and 'filename' in asset['metadata']:
-        previousAssets[asset['metadata']['filename']] = asset['asset_id']
+        allAssets[asset['metadata']['filename']] = (asset['asset_id'], asset['content_url_wav'])
 
   #now lets load the files into brain or re-use them if they are already there
   assetIds = {}
@@ -90,13 +91,13 @@ def main():
     if os.path.splitext(file)[1].lower() == '.links':
       with open(file) as inFile:
         for link in inFile:
-          assetId, basename, reused = loadLink(brainAPI, link, previousAssets)
+          assetId, basename, reused = loadLink(brainAPI, link, allAssets)
           assetIds[assetId] = basename
           if not reused:
             loadingAssets.add(assetId)
 
     else:
-      assetId, basename, reused = loadFile(brainAPI, file, previousAssets)
+      assetId, basename, reused = loadFile(brainAPI, file, allAssets)
       assetIds[assetId] = basename
       if not reused:
         loadingAssets.add(assetId)
@@ -104,7 +105,7 @@ def main():
   #now lets load any urls into brain or re-use them if they are already there
   if args.link is not None:
     for link in args.link:
-      assetId, basename, reused = loadLink(brainAPI, link, previousAssets)
+      assetId, basename, reused = loadLink(brainAPI, link, allAssets)
       assetIds[assetId] = basename
       if not reused:
         loadingAssets.add(assetId)
@@ -116,18 +117,35 @@ def main():
       asset = brainAPI.asset(assetId)
       if asset['transcript'] is not None:
         loadingAssets.remove(assetId)
+        allAssets[asset['metadata']['filename']] = (asset['asset_id'], asset['content_url_wav'])
     if len(loadingAssets) > 0:
       #give it a few second until we check again
       time.sleep(2.0)
 
   #now search!
   results = brainAPI.searchAssets(' '.join(args.query), tuple(assetIds))['results']
+  goodResults = []
   #and display the results
   for result in results:
     print('{} hits:'.format(assetIds[result['asset_id']]))
     for hit in result['hits']:
       if hit['quality'] >= args.quality:
         print('{}:{}'.format(hit['quality'], hit['time']))
+        goodResults.append((assetIds[result['asset_id']], hit['quality'], hit['time'], allAssets[assetIds[result['asset_id']]][1]))
+
+  # Now lets generate a quick results page and show them to the user
+  with open('results.html', mode='w') as resultsFile:
+    resultsFile.write('<html><head><title>Search Results</title></head><body>')
+    resultsFile.write('<b>Search query:</b> {}<br>'.format(' '.join(args.query)))
+    for idx, (basename, quality, hitTime, mp3URL) in enumerate(goodResults):
+      resultsFile.write('<p><b>{}</b>: At {:0.2f} with quality {:0.2f}</br>'.format(basename, hitTime, quality))
+      resultsFile.write('<audio id="audio{}" preload="auto" src="{}" controls/></p>'.format(idx, mp3URL))
+      resultsFile.write('<script>document.getElementById("audio{}").currentTime={};</script>'.format(idx, hitTime))
+    resultsFile.write('</body></html>')
+
+  webbrowser.open('file://' + os.path.abspath('results.html'))
 
 if __name__ == '__main__':
   main()
+
+
