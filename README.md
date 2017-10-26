@@ -30,21 +30,21 @@ brainsearch -u <user_id> -t \<token> search phrase
 #### Search some local files
 In the repository are two chapters from public domain audio clips of Alice's Adventures in Wonderland. More great clips cn be found on LibriVox.com. Try the following to quickly get you started!
 
-    brainsearch -u <user_id> -t \<token> -f ./testdata/*.mp3 oh my ears and whiskers
-    brainsearch -u <user_id> -t \<token> -f ./testdata/*.mp3 off with her head
+    brainsearch -u <user_id> -t <token> -f ./testdata/*.mp3 oh my ears and whiskers
+    brainsearch -u <user_id> -t <token> -f ./testdata/*.mp3 off with her head
 
 #### Search collections of files
 Several link collections are in the testdata directory. Try searching some of Shakespeare's sonnets!
 
-    brainsearch -u <user_id> -t \<token> -f ./testdata/shakespeare.links within thine own deep sunken eyes
+    brainsearch -u <user_id> -t <token> -f ./testdata/shakespeare.links within thine own deep sunken eyes
 
 Or find some wisdom and humor from Twain
 
-    brainsearch -u <user_id> -t \<token> -f ./testdata/twain.links Persons attempting to find a motive in this narrative
+    brainsearch -u <user_id> -t <token> -f ./testdata/twain.links Persons attempting to find a motive in this narrative
 
 #### Search everything!
 
-    brainsearch -u <user_id> -t \<token> -f ./testdata/* mother
+    brainsearch -u <user_id> -t <token> -f ./testdata/* mother
 
 # What next?
 That is up to you. Give it a try! Most popular audio and video formats are supported. If you build something cool with search or the API, let us know!
