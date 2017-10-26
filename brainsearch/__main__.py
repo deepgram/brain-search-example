@@ -12,7 +12,7 @@ limitations under the License.
 """
 
 from deepgram import Brain
-import argparse, os, time, urllib.parse, webbrowser
+import argparse, os, time, urllib.parse, webbrowser, time
 from glob import glob
 FILE_TYPES = '.mp3 .3gp .aifc .mp4 .ogg .aif .wav .amr .flac .wmv .mpg .mkv .mp2 .mov .webm .3gpp .m4a .wma .aiff .aac .3ga .links'.split()
 
@@ -82,7 +82,7 @@ def main():
     for asset in brainAPI.assets:
       if ('status' not in asset or asset['status'] != 'failed') and asset['transcript_exists'] == True and asset[
         'metadata'] is not None and 'filename' in asset['metadata']:
-        allAssets[asset['metadata']['filename']] = (asset['asset_id'], asset['content_url_wav'])
+        allAssets[asset['metadata']['filename']] = (asset['asset_id'], asset['content_url_wav'], asset['duration'])
 
   #now lets load the files into brain or re-use them if they are already there
   assetIds = {}
@@ -117,14 +117,22 @@ def main():
       asset = brainAPI.asset(assetId)
       if asset['transcript'] is not None:
         loadingAssets.remove(assetId)
-        allAssets[asset['metadata']['filename']] = (asset['asset_id'], asset['content_url_wav'])
+        allAssets[asset['metadata']['filename']] = (asset['asset_id'], asset['content_url_wav'], asset['duration'])
     if len(loadingAssets) > 0:
       #give it a few second until we check again
       time.sleep(2.0)
 
+
   #now search!
+  startTime = time.time()
   results = brainAPI.searchAssets(' '.join(args.query), tuple(assetIds))['results']
+  searchTime = time.time() - startTime
+
   goodResults = []
+  totalDuration = 0.0
+  for assetId in assetIds:
+    totalDuration += allAssets[assetIds[assetId]][2]
+
   #and display the results
   for result in results:
     print('{} hits:'.format(assetIds[result['asset_id']]))
@@ -137,12 +145,14 @@ def main():
   with open('results.html', mode='w') as resultsFile:
     resultsFile.write('<html><head><title>Search Results</title></head><body>')
     resultsFile.write('<b>Search query:</b> {}<br>'.format(' '.join(args.query)))
+    resultsFile.write('<b>Seconds of audio searched:</b> {:0.2f}<br>'.format(totalDuration))
+    resultsFile.write('<b>Search completed in {:0.2f} seconds. A {:0.2f}% speedup!</b><br>'.format(searchTime, 100*(totalDuration/searchTime)))
     if len(goodResults) > 0:
       resultsFile.write('<b>Results:</b><br>')
       for idx, (basename, quality, hitTime, mp3URL) in enumerate(goodResults):
         resultsFile.write('<p><b>{}</b>: At {:0.2f} with quality {:0.2f}</br>'.format(basename, hitTime, quality))
         resultsFile.write('<audio id="audio{}" preload="none" src="{}" controls/></p>'.format(idx, mp3URL))
-        resultsFile.write('<script>document.getElementById("audio{}").currentTime={};</script>'.format(idx, hitTime))
+        resultsFile.write('<script>document.getElementById("audio{}").currentTime={};</script>'.format(idx, hitTime - 1))
     else:
       resultsFile.write('<b>No results found.</b>')
     resultsFile.write('</body></html>')
