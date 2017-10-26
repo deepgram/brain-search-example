@@ -2,10 +2,14 @@
 Example application that searches audio files in a directory
 
 # Installation:
-git clone https://github.com/deepgram/brain-search-example.git
-cd deepgram-brain-search
-python setup.py install
+    git clone https://github.com/deepgram/brain-search-example.git
+    cd deepgram-brain-search
+    python setup.py install
 
+# Obtaining an API User ID and Token
+Obtaining an API User ID and token is easy. Just sign up for an account at www.deepgram.com, login and go to the API page.
+
+![Alt text](apipage.png?raw=true "API Page")
 # Usage
 By default all audio sources in the current directory will be searched so the simplest usage is:
 
@@ -38,3 +42,7 @@ brainsearch -u <user_id> -t \<token> -f ./testdata/shakespeare.links within thin
 Or find some wisdom and humor from Twain
 
 brainsearch -u <user_id> -t \<token> -f ./testdata/twain.links Persons attempting to find a motive in this narrative
+
+#### search collections of files
+
+brainsearch -u <user_id> -t \<token> -f ./testdata/* mother

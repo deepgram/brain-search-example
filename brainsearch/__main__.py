@@ -141,7 +141,7 @@ def main():
       resultsFile.write('<b>Results:</b><br>')
       for idx, (basename, quality, hitTime, mp3URL) in enumerate(goodResults):
         resultsFile.write('<p><b>{}</b>: At {:0.2f} with quality {:0.2f}</br>'.format(basename, hitTime, quality))
-        resultsFile.write('<audio id="audio{}" preload="auto" src="{}" controls/></p>'.format(idx, mp3URL))
+        resultsFile.write('<audio id="audio{}" preload="none" src="{}" controls/></p>'.format(idx, mp3URL))
         resultsFile.write('<script>document.getElementById("audio{}").currentTime={};</script>'.format(idx, hitTime))
     else:
       resultsFile.write('<b>No results found.</b>')
