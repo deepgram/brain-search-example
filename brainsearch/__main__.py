@@ -54,6 +54,8 @@ def main():
   parser.add_argument('query', nargs='+', help='Phrase to search for')
   parser.add_argument('-f', '--file', help='Files to search or a link file to get link to search from.', action='append')
   parser.add_argument('-l', '--link', help='Link to search.', action='append')
+  parser.add_argument('-b', '--brain-assets', help='Search all previously loaded brain assets.', action='store_true')
+
   args = parser.parse_args()
 
   #Argparse is great, but unfortunately specifying a default will append it to the list so we will check for it
@@ -66,7 +68,7 @@ def main():
   for file in fileArgs:
     files += [file for file in glob(file) if (os.path.splitext(file)[1].lower() in FILE_TYPES)]
 
-  if len(files) == 0 and args.link is None:
+  if len(files) == 0 and args.link is None and not args.brain_assets:
     print('No valid inputs found.')
     exit(0)
 
@@ -78,14 +80,18 @@ def main():
 
   #To save time, lets look for any previous assets that we have loaded
   allAssets = {}
+  assetIds = {}
   if not args.reload:
     for asset in brainAPI.assets:
-      if ('status' not in asset or asset['status'] != 'failed') and asset['transcript_exists'] == True and asset[
-        'metadata'] is not None and 'filename' in asset['metadata']:
-        allAssets[asset['metadata']['filename']] = (asset['asset_id'], asset['content_url_wav'], asset['duration'])
+      if ('status' not in asset or asset['status'] != 'failed') and asset['transcript_exists'] == True:
+        if asset['metadata'] is not None and 'filename' in asset['metadata']:
+          allAssets[asset['metadata']['filename']] = (asset['asset_id'], asset['content_url_wav'], asset['duration'])
+          if args.brain_assets:
+            assetIds[asset['asset_id']] = asset['metadata']['filename']
+        elif args.brain_assets:
+          assetIds[asset['asset_id']] = 'Asset:{}'.format(asset['asset_id'])
 
   #now lets load the files into brain or re-use them if they are already there
-  assetIds = {}
   loadingAssets = set()
   for file in files:
     if os.path.splitext(file)[1].lower() == '.links':
